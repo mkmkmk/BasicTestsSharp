@@ -147,13 +147,26 @@ internal class AsyncTestsProg
     }
 
 
+    // modified version, without throw and with catch of throw in Task.Delay
     private async static Task TaskWithCancellation(CancellationToken cancellationToken)
     {
         for (int i = 0; i < 10; i++)
         {
             Console.WriteLine(i);
-            await Task.Delay(200, cancellationToken);
-            cancellationToken.ThrowIfCancellationRequested();
+            // await przechwytuje wyjątki
+            try
+            {
+                await Task.Delay(200, cancellationToken);
+            }
+            catch (Exception)
+            {
+                Console.WriteLine("(delay exception caught)");
+                //Console.WriteLine(ex.GetType().Name + ": " + ex.Message);
+                break;
+            }
+            // cancellationToken.ThrowIfCancellationRequested();
+            if (cancellationToken.IsCancellationRequested)
+                break;
         }
     }
 
