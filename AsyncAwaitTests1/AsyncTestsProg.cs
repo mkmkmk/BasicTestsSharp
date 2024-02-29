@@ -1,4 +1,5 @@
-﻿
+﻿// examples from 'C# in a Nutshell'
+
 internal class AsyncTestsProg
 {
     private static void Main()
@@ -11,6 +12,7 @@ internal class AsyncTestsProg
         program.Test05();
         program.Test06();
         program.Test07();
+        program.Test08();
     }
 
 
@@ -33,6 +35,7 @@ internal class AsyncTestsProg
             Console.WriteLine(count);
         }
     }
+
 
     public void Test01()
     {
@@ -172,5 +175,31 @@ internal class AsyncTestsProg
         Console.WriteLine($"-- {nameof(Test07)} done --");
     }
 
+
+    private static async Task DoWhenAny()
+    {
+        // async Task<int> Delay1() { await Task.Delay(1000); return 1; }
+        async Task<int> Delay1() { await Task.Delay(1000); throw new Exception("test"); }
+        async Task<int> Delay2() { await Task.Delay(2000); return 2; }
+        async Task<int> Delay3() { await Task.Delay(3000); return 3; }
+
+        try
+        {
+            Task<int> winningTask = await Task.WhenAny(Delay1(), Delay2(), Delay3());
+            Console.WriteLine(await winningTask);
+            Console.WriteLine("Done");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.GetType().Name + ": " + ex.Message);
+        }
+    }
+
+
+    public void Test08()
+    {
+        DoWhenAny().Wait();
+        Console.WriteLine($"-- {nameof(Test08)} done --");
+    }
 
 }
