@@ -1,0 +1,17 @@
+------------------
+dotnet new console -o AsyncAwaitTests1
+------------------
+dotnet new classlib -n ALib
+cd dotnet new classlib -n ALib
+dotnet add package autofac
+dotnet add reference ../OtherLib/OtherLib.csproj
+------------------
+dotnet new nunit -n NUnitTests
+dotnet sln add NUnitTests/
+dotnet test
+dotnet add package autofac
+dotnet test
+------------------
+dotnet new console -o ExampleApp
+dotnet sln add ExampleApp/
+------------------
