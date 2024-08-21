@@ -5,33 +5,33 @@ internal class AsyncTestsProg
     private static void Main()
     {
         AsyncTestsProg program = new();
-        program.Test01();
-        program.Test02();
-        program.Test03();
-        program.Test04();
-        program.Test05();
-        program.Test06();
-        program.Test07();
-        program.Test08();
+        // program.Test01();
+        // program.Test02();
+        // program.Test03();
+        // program.Test04();
+        // program.Test05();
+        // program.Test06();
+        // program.Test07();
+        // program.Test08();
+        program.Test09();
+        program.Test10();
     }
 
 
-    private static Task<int> GetPrimesCountAsync(int start, int count)
-    {
-        return Task.Run(
+    private static Task<int> Test01GetPrimesCountAsync(int start, int count)
+        => Task.Run(
             () =>
                 ParallelEnumerable
                     .Range(start, count)
                     .Count(n => Enumerable.Range(2, (int)Math.Sqrt(n) - 1).All(i => n % i > 0))
-            );
-    }
+                );
 
 
-    private async void DisplayPrimeCounts()
+    private static async void Test01DisplayPrimeCounts()
     {
         for (int i = 0; i < 10; i++)
         {
-            int count = await GetPrimesCountAsync(i * 1000000 + 2, 1000000);
+            int count = await Test01GetPrimesCountAsync(i * 1000000 + 2, 1000000);
             Console.WriteLine(count);
         }
     }
@@ -39,7 +39,7 @@ internal class AsyncTestsProg
 
     public void Test01()
     {
-        DisplayPrimeCounts();
+        Test01DisplayPrimeCounts();
         // (zbyt krótki sleep --> nie wszystkie się obliczą)
         Thread.Sleep(1000);
         Console.WriteLine($"-- {nameof(Test01)} done --");
@@ -96,7 +96,7 @@ internal class AsyncTestsProg
     }
 
 
-    private static async Task MyAsyncFunc1()
+    private static async Task Test04Task()
     {
         await Task.Run(() => Console.WriteLine("lala"));
         throw new Exception();
@@ -107,8 +107,8 @@ internal class AsyncTestsProg
     {
         try
         {
-            // MyFunc().GetAwaiter().GetResult();
-            MyAsyncFunc1().Wait();
+            // Test04Async().GetAwaiter().GetResult();
+            Test04Task().Wait();
         }
         catch (Exception ex)
         {
@@ -118,7 +118,7 @@ internal class AsyncTestsProg
     }
 
 
-    private static async Task MyAsyncFunc2()
+    private static async Task Test05Task()
     {
         int res = await Task.Run(
             () =>
@@ -132,7 +132,7 @@ internal class AsyncTestsProg
 
     public void Test05()
     {
-        Task task = MyAsyncFunc2();
+        Task task = Test05Task();
         Console.WriteLine("waiting...");
         task.Wait();
         Console.WriteLine($"-- {nameof(Test05)} done --");
@@ -148,7 +148,7 @@ internal class AsyncTestsProg
 
 
     // modified version, without throw and with catch of throw in Task.Delay
-    private async static Task TaskWithCancellation(CancellationToken cancellationToken)
+    private async static Task Test07Task(CancellationToken cancellationToken)
     {
         for (int i = 0; i < 10; i++)
         {
@@ -175,7 +175,7 @@ internal class AsyncTestsProg
     {
         var cancelSource = new CancellationTokenSource();
         Task.Delay(1000).ContinueWith(ant => cancelSource.Cancel());
-        var task = TaskWithCancellation(cancelSource.Token).ConfigureAwait(false);
+        var task = Test07Task(cancelSource.Token).ConfigureAwait(false);
         try
         {
             task.GetAwaiter().GetResult();
@@ -189,7 +189,7 @@ internal class AsyncTestsProg
     }
 
 
-    private static async Task DoWhenAny()
+    private static async Task Test08Task()
     {
         // async Task<int> Delay1() { await Task.Delay(1000); return 1; }
         async Task<int> Delay1() { await Task.Delay(1000); throw new Exception("test"); }
@@ -211,8 +211,50 @@ internal class AsyncTestsProg
 
     public void Test08()
     {
-        DoWhenAny().Wait();
+        Test08Task().Wait();
         Console.WriteLine($"-- {nameof(Test08)} done --");
     }
 
+
+    private static Task<int> Test09Task()
+    {
+        static int GetResult()
+        {
+            Thread.Sleep(2000);
+            return 666;
+        }
+        return Task.FromResult(GetResult());
+    }
+
+
+    public void Test09()
+    {
+        Console.WriteLine($"-- {nameof(Test09)} start --");
+        var task = Task.Run(async () => Console.WriteLine($"result = {await Test09Task()}"));
+        Console.WriteLine("something");
+        task.Wait();
+        Console.WriteLine($"-- {nameof(Test09)} done --");
+    }
+
+    private static async Task<int> Test10Task()
+    {
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
+        static async Task<int> GetResult()
+        {
+            Thread.Sleep(1000);
+            return 666;
+        }
+#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
+        return await GetResult();
+    }
+
+
+    public void Test10()
+    {
+        Console.WriteLine($"-- {nameof(Test10)} start --");
+        var task = Task.Run(async () => Console.WriteLine($"result = {await Test10Task()}"));
+        Console.WriteLine("something");
+        task.Wait();
+        Console.WriteLine($"-- {nameof(Test10)} done --");
+    }
 }
