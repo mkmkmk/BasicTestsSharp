@@ -5,16 +5,18 @@ internal class AsyncTestsProg
     private static void Main()
     {
         AsyncTestsProg program = new();
-        // program.Test01();
-        // program.Test02();
-        // program.Test03();
-        // program.Test04();
-        // program.Test05();
-        // program.Test06();
-        // program.Test07();
-        // program.Test08();
+        program.Test01();
+        program.Test02();
+        program.Test03();
+        program.Test04();
+        program.Test05();
+        program.Test06();
+        program.Test07();
+        program.Test08();
         program.Test09();
         program.Test10();
+        program.Test11();
+        program.Test12();
     }
 
 
@@ -96,19 +98,19 @@ internal class AsyncTestsProg
     }
 
 
-    private static async Task Test04Task()
-    {
-        await Task.Run(() => Console.WriteLine("lala"));
-        throw new Exception();
-    }
 
 
     public void Test04()
     {
+        static async Task SomeTask()
+        {
+            await Task.Run(() => Console.WriteLine("lala"));
+            throw new Exception();
+        }
         try
         {
-            // Test04Async().GetAwaiter().GetResult();
-            Test04Task().Wait();
+            // SomeTask().GetAwaiter().GetResult();
+            SomeTask().Wait();
         }
         catch (Exception ex)
         {
@@ -118,21 +120,19 @@ internal class AsyncTestsProg
     }
 
 
-    private static async Task Test05Task()
-    {
-        int res = await Task.Run(
-            () =>
-            {
-                Thread.Sleep(2000);
-                return 5;
-            });
-        Console.WriteLine($"result == {res}");
-    }
-
-
     public void Test05()
     {
-        Task task = Test05Task();
+        static async Task SomeTask()
+        {
+            int res = await Task.Run(
+                () =>
+                {
+                    Thread.Sleep(2000);
+                    return 5;
+                });
+            Console.WriteLine($"result == {res}");
+        }
+        Task task = SomeTask();
         Console.WriteLine("waiting...");
         task.Wait();
         Console.WriteLine($"-- {nameof(Test05)} done --");
@@ -220,7 +220,7 @@ internal class AsyncTestsProg
     {
         static int GetResult()
         {
-            Thread.Sleep(2000);
+            Thread.Sleep(1000);
             return 666;
         }
         return Task.FromResult(GetResult());
@@ -238,13 +238,11 @@ internal class AsyncTestsProg
 
     private static async Task<int> Test10Task()
     {
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
         static async Task<int> GetResult()
         {
-            Thread.Sleep(1000);
+            await Task.Delay(1000);
             return 666;
         }
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         return await GetResult();
     }
 
@@ -257,4 +255,44 @@ internal class AsyncTestsProg
         task.Wait();
         Console.WriteLine($"-- {nameof(Test10)} done --");
     }
+
+
+    // Task Exception test
+    public void Test11()
+    {
+        static async Task SomeTask()
+        {
+            await Task.Delay(100);
+            throw new Exception("test exception");
+        }
+
+        SomeTask()
+            .ContinueWith(
+                prev =>
+                {
+                    Console.WriteLine(prev.Exception!.InnerException!.Message);
+                    Console.WriteLine("continuation");
+                })
+            .Wait();
+
+        Console.WriteLine($"-- {nameof(Test11)} done --");
+    }
+
+
+    // Task CancelOperationException test
+    public void Test12()
+    {
+        static async Task SomeTask(CancellationToken cancellationToken)
+            => await Task.Delay(-1, cancellationToken);
+
+        var cancelSource = new CancellationTokenSource();
+        Task.Delay(100).ContinueWith(ant => cancelSource.Cancel());
+
+        SomeTask(cancelSource.Token)
+            .ContinueWith(prev => Console.WriteLine("continuation"))
+            .Wait();
+
+        Console.WriteLine($"-- {nameof(Test12)} done --");
+    }
+
 }
